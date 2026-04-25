@@ -14,23 +14,17 @@ function AgentSteps({ steps }) {
   ];
 
   return (
-    <div style={{ marginTop: "20px" }}>
-      <h3>Agent Workflow Progress:</h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div>
+      <h4>Agent Workflow Progress</h4>
+      <div>
         {agentNames.map((agent, index) => (
           <div
             key={index}
-            style={{
-              padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "5px",
-              backgroundColor: steps.length > index ? "#e8f5e8" : "#f5f5f5",
-              opacity: steps.length > index ? 1 : 0.5
-            }}
+            className={`steps-item ${steps.length > index ? "active" : ""}`}
           >
             <strong>{agent}</strong>
             {steps.length > index && (
-              <div style={{ marginTop: "5px", fontSize: "0.9em", color: "#555" }}>
+              <div className="upload-details">
                 {steps[index]}
               </div>
             )}

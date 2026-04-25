@@ -273,6 +273,14 @@ def _fallback_response(query: str) -> Dict[str, Any]:
     }
 
 
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.events.event_actions import Content
+from .Agents.main.agent import root_agent
+
+# Initialize a persistent session service
+_session_service = InMemorySessionService()
+
 async def run_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
     query = data.get("query", "").strip()
     uploaded_file = data.get("file")
@@ -288,46 +296,71 @@ async def run_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
         return _fallback_response(query)
 
     try:
+        # Check if session exists, if not create it
+        session_id = "session_1" # In a real app, this would be dynamic
+        user_id = "user_1"
+        app_name = "AutoInsights"
+        
+        try:
+            await _session_service.get_session(user_id=user_id, session_id=session_id)
+        except:
+            await _session_service.create_session(user_id=user_id, session_id=session_id, app_name=app_name)
+            
+        runner = Runner(agent=root_agent, session_service=_session_service, app_name=app_name)
+
+        # Context for the agent
+        prompt_text = f"User Query: {query}\nDataset Filename: {uploaded_file}\nPlease execute the full data analysis pipeline."
+        prompt_content = Content(role="user", parts=[{"text": prompt_text}])
+        
+        full_text = ""
+        steps = ["Initializing Multi-Agent Pipeline"]
+        
+        # Execute the agentic pipeline
+        import asyncio
+        
+        async def execute_runner():
+            nonlocal full_text, steps
+            async for event in runner.run_async(user_id="user_1", session_id="session_1", new_message=prompt_content):
+                # Process events
+                event_name = type(event).__name__
+                if event_name not in steps:
+                    steps.append(event_name)
+                
+                # Check for model response content
+                if hasattr(event, 'content') and hasattr(event.content, 'text'):
+                    full_text += event.content.text
+
+        # Wait for completion
+        await execute_runner()
+
+        if not full_text:
+             full_text = "Analysis complete. The agents have processed your request."
+
+        return {
+            "text": full_text,
+            "steps": steps,
+            "charts": get_overview_charts(uploaded_file)
+        }
+
+    except Exception as e:
+        import traceback
+        print(f"Agent Execution Error: {e}")
+        traceback.print_exc()
+        # Fallback to programmatic logic if agent fails
         raw_df = load_dataset(uploaded_file)
-    except FileNotFoundError:
+        profile = _profile_dataset(raw_df)
+        cleaned_df, cleaning_notes = _clean_dataset(raw_df)
+        direct_answer = _answer_direct_question(cleaned_df, query)
+        analysis = analyze_dataset(cleaned_df, query)
+        overview_charts = _build_overview_charts(cleaned_df, profile)
+        charts = _merge_charts(analysis.get("charts", []), overview_charts)
+
         return {
-            "text": f"The uploaded dataset '{uploaded_file}' could not be found. Please upload it again.",
+            "text": f"*(Agent execution encountered an error, falling back to programmatic analysis)*\n\n" + 
+                    _build_narrative(query, uploaded_file, profile, cleaning_notes, analysis, direct_answer),
             "steps": [
-                "Interface Agent captured the request",
-                "Data Understanding Agent could not locate the dataset",
+                "Agentic pipeline encountered an error",
+                "Fell back to robust programmatic analysis routines"
             ],
-            "charts": [],
+            "charts": charts,
         }
-    except ValueError as exc:
-        return {
-            "text": f"AutoInsights could not load '{uploaded_file}': {exc}",
-            "steps": [
-                "Interface Agent captured the request",
-                "Data Understanding Agent attempted to load the dataset",
-                "Dataset loading failed",
-            ],
-            "charts": [],
-        }
-
-    profile = _profile_dataset(raw_df)
-    cleaned_df, cleaning_notes = _clean_dataset(raw_df)
-    direct_answer = _answer_direct_question(cleaned_df, query)
-    analysis = analyze_dataset(cleaned_df, query)
-    overview_charts = _build_overview_charts(cleaned_df, profile)
-    charts = _merge_charts(analysis.get("charts", []), overview_charts)
-
-    steps = [
-        "Interface Agent structured the user question",
-        f"Data Understanding Agent profiled {profile['rows']} rows and {profile['columns']} columns",
-        "Data Cleaning Agent standardized duplicates and placeholder values",
-        "EDA Agent selected the relevant analysis workflow",
-        "Statistical Analysis Agent computed quantitative evidence where applicable",
-        "Insight Generation Agent translated the findings into natural language",
-        "Visualization & Reporting Agent prepared charts and the final report",
-    ]
-
-    return {
-        "text": _build_narrative(query, uploaded_file, profile, cleaning_notes, analysis, direct_answer),
-        "steps": steps,
-        "charts": charts,
-    }

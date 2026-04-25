@@ -1,4 +1,5 @@
 from google.adk.agents.llm_agent import Agent
+from ..tools import analyze_data
 
 EDA_agent = Agent(
     model='gemini-2.5-flash',
@@ -55,4 +56,5 @@ EDA_agent = Agent(
         "Ensure all analyses are reproducible, unbiased, and clearly separated from "
         "feature engineering or modeling decisions, serving strictly as guidance for downstream agents."
     ),
+    tools=[analyze_data]
 )

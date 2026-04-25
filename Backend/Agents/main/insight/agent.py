@@ -1,4 +1,5 @@
 from google.adk.agents.llm_agent import Agent
+from ..tools import analyze_data
 
 insight_agent = Agent(
     model='gemini-2.5-flash',
@@ -47,5 +48,5 @@ insight_agent = Agent(
         "Ensure all explanations are faithful to the underlying data and models, "
         "ethically presented, and suitable for decision-makers, end users, or reports."
     ),
-
+    tools=[analyze_data]
 )

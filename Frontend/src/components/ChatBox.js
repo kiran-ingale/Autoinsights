@@ -1,23 +1,93 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { analyzeQuery } from "../api";
-import AgentSteps from "./AgentSteps";
+import { analyzeQuery, formatApiError } from "../api";
 import Charts from "./Charts";
 import FileUpload from "./FileUpload";
 
+const CHAT_HISTORY_KEY = "autoinsights.chatHistory";
+const UPLOADED_FILE_KEY = "autoinsights.uploadedFile";
+const UPLOADED_FILE_NAME_KEY = "autoinsights.uploadedFileName";
+
+const getTimestamp = () =>
+  new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatMessageContent = (content, type) => {
+  if (!content || type === "user") {
+    return content;
+  }
+
+  // Convert markdown-style headings to cleaner readable sections.
+  return content
+    .split("\n")
+    .map((line) => line.replace(/^#{1,6}\s+/, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
 function ChatBox() {
   const [input, setInput] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_HISTORY_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadedFile, setUploadedFile] = useState(
+    () => localStorage.getItem(UPLOADED_FILE_KEY) || null,
+  );
+  const [uploadedFileName, setUploadedFileName] = useState(
+    () => localStorage.getItem(UPLOADED_FILE_NAME_KEY) || null,
+  );
+  const logRef = useRef(null);
+
+  const quickPrompts = useMemo(
+    () => [
+      "Give me a quick profile of this dataset.",
+      "Show trends and outliers with visuals.",
+      "What are the top correlations I should care about?",
+    ],
+    [],
+  );
+
+  useEffect(() => {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory));
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (uploadedFile) {
+      localStorage.setItem(UPLOADED_FILE_KEY, uploadedFile);
+    } else {
+      localStorage.removeItem(UPLOADED_FILE_KEY);
+    }
+  }, [uploadedFile]);
+
+  useEffect(() => {
+    if (uploadedFileName) {
+      localStorage.setItem(UPLOADED_FILE_NAME_KEY, uploadedFileName);
+    } else {
+      localStorage.removeItem(UPLOADED_FILE_NAME_KEY);
+    }
+  }, [uploadedFileName]);
 
   const handleFileUpload = (filename, originalName = filename) => {
     setUploadedFile(filename);
+    setUploadedFileName(originalName);
     setChatHistory((prev) => [
       ...prev,
       {
         type: "system",
         content: `Dataset "${originalName}" uploaded successfully! You can now ask questions about this data.`,
+        time: getTimestamp(),
       },
     ]);
   };
@@ -33,6 +103,7 @@ function ChatBox() {
       {
         type: "user",
         content: userMessage,
+        time: getTimestamp(),
       },
     ]);
 
@@ -48,15 +119,19 @@ function ChatBox() {
           content: res.text,
           charts: res.charts || [],
           steps: res.steps || [],
+          time: getTimestamp(),
         },
       ]);
-
     } catch (err) {
       setChatHistory((prev) => [
         ...prev,
         {
           type: "error",
-          content: "Error connecting to backend. Please try again.",
+          content: formatApiError(
+            err,
+            "Error connecting to backend. Please try again.",
+          ),
+          time: getTimestamp(),
         },
       ]);
     } finally {
@@ -71,139 +146,149 @@ function ChatBox() {
     }
   };
 
+  const applyQuickPrompt = (prompt) => setInput(prompt);
+
+  const clearConversation = () => {
+    setChatHistory([]);
+  };
+
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "20px" }}>
-      <h2>AutoInsights AI Data Analyst</h2>
+    <div className="chat-layout">
+      <aside className="left-panel panel">
+        <div className="panel-title">
+          <h3>Workspace</h3>
+          <span className="pill pill-neutral">v1</span>
+        </div>
+        <FileUpload onFileUpload={handleFileUpload} disabled={loading} />
+        <div className="dataset-card">
+          <div className="dataset-label">Active dataset</div>
+          <div className="dataset-value">
+            {uploadedFileName || uploadedFile || "None"}
+          </div>
+          <div className="dataset-hint">
+            Upload a file to unlock analysis & visualizations.
+          </div>
+        </div>
+        <ul className="hint-list">
+          <li>Upload CSV, XLSX, XLS, or JSON datasets.</li>
+          <li>Ask descriptive, diagnostic, or comparative questions.</li>
+          <li>Review generated charts and agent execution steps.</li>
+        </ul>
+      </aside>
 
-      <FileUpload onFileUpload={handleFileUpload} disabled={loading} />
+      <section className="chat-panel panel">
+        <div className="chat-header">
+          <div>
+            <div className="chat-title">AI Analyst</div>
+            <div className="chat-subtitle">
+              Ask questions • get charts • see agent steps
+            </div>
+          </div>
+          <div className="chat-actions">
+            <span className="pill pill-neutral">{chatHistory.length} msgs</span>
+            {uploadedFile && (
+              <span className="pill pill-accent">
+                Dataset: {uploadedFileName || uploadedFile}
+              </span>
+            )}
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={clearConversation}
+              disabled={loading || chatHistory.length === 0}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
 
-      <div
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: "10px",
-          padding: "20px",
-          marginBottom: "20px",
-          maxHeight: "400px",
-          overflowY: "auto",
-          backgroundColor: "#fafafa",
-        }}
-      >
+        <div className="message-log" ref={logRef} role="log" aria-live="polite">
         {chatHistory.length === 0 && (
-          <div
-            style={{ textAlign: "center", color: "#999", fontStyle: "italic" }}
-          >
-            Upload a dataset and start asking questions about your data!
+          <div className="empty-state">
+            <div className="empty-hero" aria-hidden="true">
+              <div className="empty-orb" />
+              <div className="empty-orb orb2" />
+              <div className="empty-orb orb3" />
+            </div>
+            <div className="empty-title">Start an analysis</div>
+            <div className="empty-text">
+              Upload a dataset on the left, then ask a question like “show trends
+              and outliers” or “what correlations matter most?”
+            </div>
           </div>
         )}
 
         {chatHistory.map((message, index) => (
-          <div
-            key={index}
-            style={{
-              marginBottom: "15px",
-              display: "flex",
-              justifyContent:
-                message.type === "user" ? "flex-end" : "flex-start",
-            }}
-          >
-            <div
-              style={{
-                maxWidth: "70%",
-                padding: "12px 16px",
-                borderRadius: "18px",
-                backgroundColor:
-                  message.type === "user"
-                    ? "#007bff"
-                    : message.type === "ai"
-                      ? "#e3f2fd"
-                      : message.type === "system"
-                        ? "#fff3cd"
-                        : "#f8d7da",
-                color:
-                  message.type === "user"
-                    ? "white"
-                    : message.type === "error"
-                      ? "#721c24"
-                      : "#333",
-                border:
-                  message.type === "system" ? "1px solid #ffeaa7" : "none",
-              }}
-            >
+          <div key={index} className={`row ${message.type === "user" ? "user" : ""}`}>
+            <div className="avatar" aria-hidden="true">
+              {message.type === "user" ? "U" : message.type === "ai" ? "AI" : "•"}
+            </div>
+            <div className={`bubble ${message.type}`}>
+              <div className="bubble-header">
+                <strong>{message.type.toUpperCase()}</strong>
+                <span>{message.time || "--:--"}</span>
+              </div>
               {message.type === "ai" &&
                 message.charts &&
                 message.charts.length > 0 && (
-                  <div style={{ marginBottom: "10px" }}>
+                  <div>
                     <Charts charts={message.charts} />
                   </div>
                 )}
 
-              <div style={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
-                {message.content}
+              <div className="message-content">
+                {formatMessageContent(message.content, message.type)}
               </div>
-
-              {message.type === "ai" &&
-                message.steps &&
-                message.steps.length > 0 && (
-                  <div style={{ marginTop: "10px" }}>
-                    <AgentSteps steps={message.steps} />
-                  </div>
-                )}
             </div>
           </div>
         ))}
 
         {loading && (
-          <div style={{ textAlign: "center", margin: "20px 0" }}>
-            <div style={{ fontSize: "16px", color: "#007bff" }}>
-              AI Agents are analyzing your query...
+          <div className="empty-state">
+            <div className="loading-row">
+              <div className="spinner" aria-hidden="true" />
+              <div>
+                <div className="empty-title">Analyzing</div>
+                <div className="empty-text">Agents are working on your query…</div>
+              </div>
             </div>
           </div>
         )}
-      </div>
+        </div>
 
-      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
+        <div className="quick-prompts">
+          {quickPrompts.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => applyQuickPrompt(prompt)}
+              disabled={loading}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+
+        <div className="composer">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           placeholder="Ask questions about your data..."
           disabled={loading}
-          style={{
-            flex: 1,
-            padding: "12px",
-            fontSize: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "20px",
-            resize: "none",
-            minHeight: "20px",
-            maxHeight: "100px",
-            outline: "none",
-          }}
-          rows={1}
+          rows={2}
+          aria-label="Ask the AI analyst"
         />
         <button
           onClick={handleSubmit}
           disabled={loading || !input.trim()}
-          style={{
-            padding: "12px 24px",
-            fontSize: "16px",
-            backgroundColor: loading || !input.trim() ? "#ccc" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "20px",
-            cursor: loading || !input.trim() ? "not-allowed" : "pointer",
-            whiteSpace: "nowrap",
-          }}
+          className="btn btn-primary"
         >
           {loading ? "Analyzing..." : "Send"}
         </button>
-      </div>
-
-      {uploadedFile && (
-        <div style={{ marginTop: "10px", fontSize: "0.9em", color: "#666" }}>
-          Current dataset: {uploadedFile}
         </div>
-      )}
+
+      </section>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 from google.adk.agents.llm_agent import Agent
+from ..tools import inspect_data
 
 inspector_agent = Agent(
     model='gemini-2.5-flash',
@@ -50,5 +51,5 @@ inspector_agent = Agent(
         "suitable for consumption by downstream agents such as Data Cleaning, Feature Engineering, "
         "and Model Selection agents."
     ),
-    
+    tools=[inspect_data]
 )

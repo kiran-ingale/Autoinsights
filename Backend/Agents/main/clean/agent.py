@@ -1,4 +1,5 @@
 from google.adk.agents.llm_agent import Agent
+from ..tools import clean_data
 
 clean_agent = Agent(
     model='gemini-2.5-flash',
@@ -55,5 +56,5 @@ clean_agent = Agent(
         "Ensure the cleaned dataset and logs are deterministic, reproducible, "
         "and ready for downstream Feature Engineering and Modeling agents."
     ),
-
+    tools=[clean_data]
 )

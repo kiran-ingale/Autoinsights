@@ -1,4 +1,5 @@
 from google.adk.agents.llm_agent import Agent
+from ..tools import generate_final_report, get_overview_charts
 
 reporting_agent = Agent(
     model='gemini-2.5-flash',
@@ -40,5 +41,5 @@ reporting_agent = Agent(
         "If visualization generation fails, log the error and generate a fallback "
         "static summary report instead."
     ),
-
+    tools=[generate_final_report, get_overview_charts]
 )

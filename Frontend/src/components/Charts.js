@@ -26,7 +26,7 @@ function Charts({ charts }) {
     switch (type) {
       case 'line':
         return (
-          <div key={index} style={{ marginBottom: '40px' }}>
+          <div key={index} className="chart-wrapper">
             <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>{title}</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={data}>
@@ -51,7 +51,7 @@ function Charts({ charts }) {
 
       case 'bar':
         return (
-          <div key={index} style={{ marginBottom: '40px' }}>
+          <div key={index} className="chart-wrapper">
             <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>{title}</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={data}>
@@ -74,7 +74,7 @@ function Charts({ charts }) {
 
       case 'pie':
         return (
-          <div key={index} style={{ marginBottom: '40px' }}>
+          <div key={index} className="chart-wrapper">
             <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>{title}</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -104,8 +104,8 @@ function Charts({ charts }) {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
+    <div>
+      <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#e2e8f0' }}>
         📊 Data Visualizations
       </h2>
       {charts.map((chart, index) => renderChart(chart, index))}

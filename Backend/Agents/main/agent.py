@@ -8,28 +8,7 @@ from .feature.agent import feature_agent
 from .stat.agent import stat_agent
 from .insight.agent import insight_agent
 from .reporting.agent import reporting_agent
-
-
-combined_tools = []
-if interface_agent.tools:
-    combined_tools.extend(interface_agent.tools)
-if data_aquisition_agent.tools:
-    combined_tools.extend(data_aquisition_agent.tools)
-if inspector_agent.tools:
-    combined_tools.extend(inspector_agent.tools)
-if clean_agent.tools:
-    combined_tools.extend(clean_agent.tools)
-if EDA_agent.tools:
-    combined_tools.extend(EDA_agent.tools)
-if feature_agent.tools:
-    combined_tools.extend(feature_agent.tools)
-if stat_agent.tools:
-    combined_tools.extend(stat_agent.tools)
-if insight_agent.tools:
-    combined_tools.extend(insight_agent.tools)
-if reporting_agent.tools:
-    combined_tools.extend(reporting_agent.tools)
-
+from .execution.agent import execution_agent
 
 root_agent = Agent(
     model='gemini-2.5-flash',
@@ -42,8 +21,31 @@ root_agent = Agent(
 
     instruction = (
         "You are an AI data analyst. When given a data analysis query, provide a comprehensive "
-        "analysis response. Break down your thinking into clear steps and provide actionable insights. "
-        "If the query mentions specific data, acknowledge that you would need access to that data. "
-        "Provide detailed analysis methodology and expected outcomes."
+        "analysis response. Break down your thinking into clear steps and provide actionable insights.\n\n"
+        
+        "You have access to a team of specialized agents. Delegate tasks to them as follows:\n"
+        "1. Use interface_agent to clarify requirements.\n"
+        "2. Use data_aquisition_agent if data is missing.\n"
+        "3. Use inspector_agent to profile the dataset.\n"
+        "4. Use clean_agent to clean the data.\n"
+        "5. Use EDA_agent and stat_agent for core analysis.\n"
+        "6. Use insight_agent to synthesize findings.\n"
+        "7. Use reporting_agent to generate the final report.\n"
+        "8. Use execution_agent to propose and apply modifications AFTER user approval.\n\n"
+        
+        "If a user asks to 'apply changes' or 'fix the data' based on previous recommendations, "
+        "immediately delegate to the execution_agent."
     ),
+    sub_agents=[
+        interface_agent, 
+        data_aquisition_agent, 
+        inspector_agent, 
+        clean_agent, 
+        EDA_agent, 
+        feature_agent, 
+        stat_agent, 
+        insight_agent, 
+        reporting_agent,
+        execution_agent
+    ]
 )

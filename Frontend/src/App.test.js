@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import App from './App';
 
-test('renders learn react link', () => {
+jest.mock('./components/ChatBox', () => function MockChatBox() {
+  return <div>Mock Chat</div>;
+});
+
+test('renders AutoInsights heading', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const heading = screen.getByText(/AutoInsights/i);
+  expect(heading).toBeInTheDocument();
 });

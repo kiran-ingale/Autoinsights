@@ -1,4 +1,5 @@
 from google.adk.agents.llm_agent import Agent
+from ..tools import analyze_data
 
 stat_agent = Agent(
     model='gemini-2.5-flash',
@@ -52,5 +53,5 @@ stat_agent = Agent(
         "Deliver results in a structured, interpretable format suitable for reports, "
         "decision-making, or as justification for further machine learning modeling."
     ),
-
+    tools=[analyze_data]
 )
