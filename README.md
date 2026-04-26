@@ -92,6 +92,7 @@ npm start
 4. Cleans and analyzes data
 5. Generates insights
 6. Outputs visual report/dashboard
+7. natural language querying
 
 ---
 
@@ -108,9 +109,8 @@ npm start
 
 * Integration with advanced LLM reasoning
 * Real-time data processing
-* Enhanced dashboard UI
 * Deployment on cloud (AWS/GCP)
-* More specialized agents
+* context awareness, multiple chat histories
 
 ## 🙌 Contributions
 
