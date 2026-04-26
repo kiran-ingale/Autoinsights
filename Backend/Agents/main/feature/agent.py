@@ -1,7 +1,7 @@
 from google.adk.agents.llm_agent import Agent
 
 feature_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='feature_agent',
     description = (
         "A transformation-focused agent responsible for converting cleaned data into "

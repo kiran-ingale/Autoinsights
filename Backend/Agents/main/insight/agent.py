@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import analyze_data
 
 insight_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='insight_agent',
     description = (
         "An interpretability-focused agent responsible for converting analytical and modeling "

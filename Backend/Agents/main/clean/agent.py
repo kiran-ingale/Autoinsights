@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import clean_data
 
 clean_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='clean_agent',
     description = (
         "A controlled transformation agent responsible for improving dataset quality by "

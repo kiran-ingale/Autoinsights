@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import analyze_data
 
 stat_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='stat_agent',
     description = (
         "An optional analytical agent responsible for performing classical statistical analysis "

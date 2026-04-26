@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import generate_final_report, get_overview_charts
 
 reporting_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='reporting_agent',
     description = (
         "A presentation agent responsible for generating concrete visual dashboards "

@@ -191,29 +191,44 @@ def analyze_correlations(df: pd.DataFrame, dataset_info: Dict) -> Dict[str, Any]
             direction = "positive" if corr > 0 else "negative"
             text += f"- **{col1} vs {col2}**: {strength} {direction} correlation ({corr:.3f})\n"
 
-        # Create heatmap data (top correlations)
-        if len(correlations) > 0:
-            top_corr = correlations[:min(10, len(correlations))]
-            heatmap_data = []
-
-            for col1, col2, _, corr in top_corr:
-                heatmap_data.append({
-                    'variable1': col1,
-                    'variable2': col2,
-                    'correlation': corr
+            # Create heatmap data (top correlations)
+            if len(correlations) > 0:
+                top_corr = correlations[:min(10, len(correlations))]
+                
+                # Add a scatter plot for the #1 correlation
+                col1_top, col2_top, _, _ = top_corr[0]
+                scatter_data = []
+                # Sample data if too large for performance
+                sample_size = min(500, len(df))
+                sample_df = df[[col1_top, col2_top]].sample(sample_size).dropna()
+                for _, row in sample_df.iterrows():
+                    scatter_data.append({
+                        'x': float(row[col1_top]),
+                        'y': float(row[col2_top])
+                    })
+                
+                charts.append({
+                    'type': 'scatter',
+                    'title': f'Correlation: {col1_top.title()} vs {col2_top.title()}',
+                    'data': scatter_data,
+                    'xKey': 'x',
+                    'yKeys': ['y'],
+                    'xLabel': col1_top.title(),
+                    'yLabel': col2_top.title(),
+                    'colors': ['#8884d8']
                 })
 
-            charts.append({
-                'type': 'bar',
-                'title': 'Top Variable Correlations',
-                'data': [
-                    {'correlation': f"{col1} vs {col2}", 'strength': abs(corr)}
-                    for col1, col2, _, corr in top_corr
-                ],
-                'xKey': 'correlation',
-                'yKeys': ['strength'],
-                'colors': ['#8884d8']
-            })
+                charts.append({
+                    'type': 'bar',
+                    'title': 'Top Variable Correlations',
+                    'data': [
+                        {'correlation': f"{col1} vs {col2}", 'strength': abs(corr)}
+                        for col1, col2, _, corr in top_corr
+                    ],
+                    'xKey': 'correlation',
+                    'yKeys': ['strength'],
+                    'colors': ['#82ca9d']
+                })
 
     else:
         text += "\n### Insufficient Numeric Data\n"
@@ -419,10 +434,31 @@ def analyze_outliers(df: pd.DataFrame, dataset_info: Dict) -> Dict[str, Any]:
                 'outlier_percentage': outlier_pct
             })
 
+            # Create box plot data for this column
+            stats_data = {
+                'column': col,
+                'min': float(data.min()),
+                'q1': float(Q1),
+                'median': float(data.median()),
+                'q3': float(Q3),
+                'max': float(data.max()),
+                'lower_bound': float(lower_bound),
+                'upper_bound': float(upper_bound)
+            }
+            
+            charts.append({
+                'type': 'boxplot',
+                'title': f'{col.title()} Box Plot',
+                'data': [stats_data],
+                'xKey': 'column',
+                'yKeys': ['min', 'q1', 'median', 'q3', 'max'],
+                'colors': ['#8884d8']
+            })
+
     if outlier_summary:
         charts.append({
             'type': 'bar',
-            'title': 'Outliers by Column',
+            'title': 'Outlier Counts by Column',
             'data': outlier_summary,
             'xKey': 'column',
             'yKeys': ['outlier_count'],

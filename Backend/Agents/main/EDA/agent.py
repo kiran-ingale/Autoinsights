@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import analyze_data
 
 EDA_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='EDA_agent',
     description = (
         "An analytical agent responsible for discovering patterns, relationships, and "

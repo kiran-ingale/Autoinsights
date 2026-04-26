@@ -1,3 +1,11 @@
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables from Backend/Agents/main/.env
+env_path = Path(__file__).parent / "Agents" / "main" / ".env"
+load_dotenv(dotenv_path=env_path)
+
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 

@@ -1,7 +1,7 @@
 from google.adk.agents.llm_agent import Agent
 
 data_aquisition_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='data_aquisition_agent',
     description = "An autonomous agent responsible for acquiring relevant datasets when the user has not provided data.",
 

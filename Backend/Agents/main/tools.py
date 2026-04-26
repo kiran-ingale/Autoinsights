@@ -3,7 +3,7 @@ import numpy as np
 from typing import Dict, Any, List, Tuple
 from pathlib import Path
 from Backend.data_analyzer import analyze_dataset, load_dataset
-from Backend.agent_service import _profile_dataset, _clean_dataset, _build_overview_charts, _build_narrative, _answer_direct_question
+from Backend.utils import _profile_dataset, _clean_dataset, _build_overview_charts, _build_narrative, _answer_direct_question
 
 UPLOAD_DIR = Path("Backend/uploads")
 

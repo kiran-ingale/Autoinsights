@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import apply_action
 
 execution_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='execution_agent',
     description = (
         "An action-oriented agent responsible for executing specific data modifications, "

@@ -2,7 +2,7 @@ from google.adk.agents.llm_agent import Agent
 from ..tools import inspect_data
 
 inspector_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='inspector_agent',
     description = (
         "A core analytical agent responsible for exhaustive initial inspection, validation, "

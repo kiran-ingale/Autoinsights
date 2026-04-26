@@ -11,7 +11,7 @@ from .reporting.agent import reporting_agent
 from .execution.agent import execution_agent
 
 root_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='root_agent',
     description = (
         "The central orchestrator agent responsible for managing and coordinating "

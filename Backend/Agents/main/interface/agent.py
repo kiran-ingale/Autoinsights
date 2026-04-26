@@ -1,7 +1,7 @@
 from google.adk.agents.llm_agent import Agent
 
 interface_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-flash-lite-latest',
     name='interface_agent',
     description = "An interface agent that interacts directly with the user to understand their problem and requirements.",
 
